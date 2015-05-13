@@ -1,0 +1,136 @@
+import java.awt.List;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+
+public class DBOpt {
+	public static String connUrl = "jdbc:mysql://127.0.0.1/";
+	public static String connDB = "test";
+    public static String name = "com.mysql.jdbc.Driver";  
+
+	public static String connStr = connUrl + connDB;
+	public static String username = "";
+	public static String password = "";
+	
+	public static Connection conn = null;
+	public static PreparedStatement pst = null;
+	
+	public static void close() {
+		try {
+		    conn.close();
+			pst.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static boolean executeSql(String sql) throws ClassNotFoundException {
+		try {
+			Class.forName(name);
+			conn = DriverManager.getConnection(connStr,username,password);
+			pst = conn.prepareStatement(sql);
+			return true;
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return false;
+		} finally {
+			close();
+		}
+	}
+	
+	public static ResultSet getResult(String sql) throws ClassNotFoundException {
+		try {
+			Class.forName(name);
+			conn = DriverManager.getConnection(connStr,username,password);
+			pst = conn.prepareStatement(sql);
+			ResultSet rs = pst.executeQuery();
+			return rs;
+		} catch (SQLException e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			return null;
+		} finally {
+			close();
+		}
+	}
+	
+	public static ArrayList<ArrayList<String>> getResultArray(String sql) throws ClassNotFoundException {
+		try {
+			Class.forName(name);
+			conn = DriverManager.getConnection(connStr,username,password);
+			pst = conn.prepareStatement(sql);
+			ResultSet rs = pst.executeQuery();
+			ArrayList<ArrayList<String>> resultList = new ArrayList<ArrayList<String>>();
+			while(rs.next()) {
+				ArrayList<String> line = new ArrayList<String>();
+				for(int i = 0;i < rs.getMetaData().getColumnCount();i++) {
+					line.add(rs.getString(i + 1));
+				}
+				resultList.add(line);
+			}
+			return resultList;
+		} catch (SQLException e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			return null;
+		} finally {
+			close();
+		}
+	}
+	
+	public static String getExecResult(String sql) throws ClassNotFoundException {
+		try {
+			Class.forName(name);
+			conn = DriverManager.getConnection(connStr,username,password);
+			pst = conn.prepareStatement(sql);
+			ResultSet rs = pst.executeQuery();
+			ArrayList<ArrayList<String>> resultList = new ArrayList<ArrayList<String>>();
+			while(rs.next()) {
+				ArrayList<String> line = new ArrayList<String>();
+				for(int i = 0;i < rs.getMetaData().getColumnCount();i++) {
+					line.add(rs.getString(i + 1));
+				}
+				resultList.add(line);
+			}
+			String val = resultList.get(0).get(0).trim();
+		    return val.length() > 0 ? val : "";
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return null;
+		} finally {
+			close();
+		}
+	}
+	
+	public static boolean executeTrans(java.util.List<String> transList) throws SQLException, ClassNotFoundException {
+		try {
+			Class.forName(name);
+			conn = DriverManager.getConnection(connStr,username,password);
+			conn.setAutoCommit(false);
+			for (String sql : transList) {
+				pst = conn.prepareStatement(sql);
+				pst.executeUpdate();
+			}
+			conn.commit();
+			return true;
+		} catch (SQLException e) {
+			e.printStackTrace();
+			try {
+				conn.rollback();
+			} catch (SQLException e2) {
+				// TODO: handle exception
+				e.printStackTrace();
+				return false;
+			}
+			return false;
+		} finally {
+			close();
+		}
+	}
+	
+}
